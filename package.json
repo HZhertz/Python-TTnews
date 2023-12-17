@@ -1,0 +1,8 @@
+{
+  "name": "TTnews",
+  "version": "1.0.0",
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "jsdom": "^21.1.1"
+  }
+}
