@@ -5,12 +5,11 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client['TT_news']
 
 # ！！！清空数据库
-db['ALL_news'].delete_many({})
+db['articles'].delete_many({})
 db['hot_list'].delete_many({})
-db['authors'].delete_many({})
+db['users'].delete_many({})
 db['videos'].delete_many({})
 
 # db['administrators'].delete_many({})
-# db['users'].delete_many({})
 
 
