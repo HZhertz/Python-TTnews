@@ -1,3 +1,12 @@
+import requests
+import json
+import re
+from bs4 import BeautifulSoup
+from pymongo import errors
+from urllib.parse import unquote
+from get_news import get_article_info, get_author_info, add_author, get_video_info, get_signature, take_article, take_video, articles_collection, videos_collection
+from get_news import HEADERS_, hot_list_collection
+
 
 # 获得作者主页url
 def get_author_url(url, type):
@@ -104,6 +113,8 @@ def get_hot_event():
     url = f"https://www.toutiao.com/hot-event/hot-board/?origin=toutiao_pc&_signature={signature}"
     print('###热点列表请求URL:', url)
     hot_event_list = []
+    article_list = []
+    video_list = []
     response = requests.get(url)
     data = response.json()
     data_list = data["data"]
@@ -113,17 +124,56 @@ def get_hot_event():
         print('<----newItem:', item)
         hot_event_data = take_hot_event(item)
         if hot_event_data:
+            print(hot_event_data['Url'], hot_event_data['Type'])
+            if hot_event_data['Type'] == 'article':
+                take_article(
+                    article_list,
+                    {
+                        'group_id': re.findall(r'\d+', hot_event_data['Url'])[0],
+                        'user_info': {
+                            'user_id': hot_event_data['AuthorInfo']['source_id']
+                        }
+                    },
+                    {
+                        'name': 'hot',
+                        'channel_id': '3189398996',
+                        'signature': 'hot_sig'
+                    }, 'avatar_hide|image_none')
+            if hot_event_data['Type'] == 'video':
+                take_video(
+                    video_list,
+                    {
+                        'group_id': hot_event_data['VideoInfo']['video_id'],
+                        'user_info': {
+                            'user_id': hot_event_data['AuthorInfo']['source_id']
+                        }
+                    },
+                    {
+                        'name': 'hot',
+                        'channel_id': '3189398996',
+                        'signature': 'hot_sig'
+                    }, 'avatar_hide|image_large|video')
             hot_event_list.append(hot_event_data)
+
             print(f"---->第{len(hot_event_list)}条{hot_event_data['Type']}热点数据:{hot_event_data}")
     # 将获取到的数据更新到数据库
     try:
         result = hot_list_collection.insert_many(hot_event_list, ordered=False)
         inserted_count = len(result.inserted_ids)
         print(f"Successfully inserted {inserted_count} hot_event documents to hot_list.")
+        if article_list:
+            result_all = articles_collection.insert_many(article_list, ordered=False)
+            inserted_count_all = len(result_all.inserted_ids)
+            print(f"Successfully inserted {inserted_count_all} hot_event documents to articles.")
+        if video_list:
+            result_video = videos_collection.insert_many(video_list, ordered=False)
+            inserted_count_video = len(result_video.inserted_ids)
+            print(f"Successfully inserted {inserted_count_video} video documents to videos from hot_event.")
         print('\n')
     except errors.BulkWriteError as e:
         # 处理错误
         print(e.details)
 
+
 # 获取热点列表
-# get_hot_event()
+get_hot_event()

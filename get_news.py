@@ -19,6 +19,7 @@ db = client['TT_news']
 articles_collection = db['articles']
 videos_collection = db['videos']
 users_collection = db['users']
+hot_list_collection = db['hot_list']
 
 # 设置请求头信息
 HEADERS = {
@@ -129,23 +130,23 @@ def get_article_info(url):
     print('----从article详情页id为RENDER_DATA的script标签中获取信息,articleUrl:', url)
     res = requests.get(url, headers=HEADERS_)
     soup = BeautifulSoup(res.text, 'html.parser')
-    h1 = soup.find('h1')
-    article = soup.find('article')
+    # h1 = soup.find('h1')
+    # article = soup.find('article')
     encoded_str = soup.find('script', {'id': 'RENDER_DATA'}).string
     render_data = json.loads(unquote(encoded_str))
     try:
         seo_info = render_data['data']['seoTDK']
     except KeyError:
         return
-    print('articleH1:', h1)
+    print('title:', seo_info['title'])
     return {
-        'h1': str(h1),
-        'article': str(article),
+        'content': render_data['data']['content'],
         'title': seo_info['title'],
         'description': seo_info['description'],
         'keywords': seo_info['keywords'],
         'publish_time': int(seo_info['publishTimestamp']),
-        'type': 'article'
+        'type': 'article',
+        'image_list': render_data['data'].get('imageList', [])
     }
 
 
@@ -164,15 +165,17 @@ def get_author_info(author_url):
     if filename is not None:
         avatar_url = 'http://127.0.0.1:3007/user_avatar/' + filename
     if media_info['userVerified']:
+        print('media_info',media_info)
         verified_content = media_info['userAuthInfo']['auth_info']
     else:
         verified_content = ''
     print('author:', media_info['name'])
-    # 生成一个唯一的user_id
-    while True:
-        user_id = random.randint(100000000, 999999999)  # 生成一个9位的随机数
-        if not users_collection.find_one({'user_id': user_id}):  # 检查这个id是否已经存在
-            break
+
+    user_id = int(media_info['mediaId'])
+    # while True:
+    #     user_id = random.randint(100000000, 999999999)  # 生成一个9位的随机数
+    #     if not users_collection.find_one({'user_id': user_id}):  # 检查这个id是否已经存在
+    #         break
     # 生成一个唯一的user_name
     while True:
         user_name = ''.join(random.choices(string.ascii_letters, k=8))
@@ -180,6 +183,7 @@ def get_author_info(author_url):
             break
     return {
         'user_id': user_id,
+        'source_id': media_info['userId'],
         'user_nickname': media_info['name'],
         'user_avatar': avatar_url,
         'user_gender': 0,
@@ -196,7 +200,10 @@ def get_author_info(author_url):
         'comment': [],
         'following': [],
         'messagelist': [],
-        'channel': [0, 1, 2, 3, 4, 5, 6],
+        'channel': {
+            'selected': [0, 1, 2, 3, 4, 5, 6, 7],
+            'unselected': [8, 9, 10, 11, 12, 13, 14, 15],
+        },
         'InterestModel': [],
         'user_state': 0
     }
@@ -233,10 +240,10 @@ def get_video_info(url):
             'description': seo_info['description'],
             'keywords': seo_info['keywords'],
             'publish_time': render_data['data']['initialVideo']['publishTime'],
+            'duration': render_data['data']['initialVideo']['videoPlayInfo']['video_duration'],
             'src': src,
             'image_url': render_data['data']['initialVideo']['coverUrl'],
             'type': 'video',
-            'vid': render_data['data']['initialVideo']['videoPlayInfo']['video_id'],
             'video_style': video_style
         }
     else:
@@ -281,18 +288,22 @@ def take_article(news_list, item, channel_item, ui_style):
     article_url = f"https://www.toutiao.com/article/{article_id}/"
     news_type = 'article'
     style = ui_style.split('|')[1]
+    article_info = get_article_info(article_url)
+    if not article_info:
+        print('no seo_info')
+        return
+    content = article_info['content']
     image_list = []
     save_path = 'D:\\work\\TTnews\\Vue3-TT-news-api\\public\\article_images'
-    if ui_style == 'avatar_hide|image_right':
-        filename = download_image(item['middle_image']["url"], save_path)
-        if filename is not None:
-            image_list = [{'url': 'http://127.0.0.1:3007/article_images/' + filename}]
-    elif ui_style == 'avatar_hide|image_list':
-        for element in item['image_list']:
-            filename = download_image(element['url'], save_path)
+    if not article_info['image_list'] == []:
+        for element in article_info['image_list']:
+            filename = download_image(element, save_path)
             if filename is not None:
-                image_list.append({'url': 'http://127.0.0.1:3007/article_images/' + filename})
-    article_info = get_article_info(article_url)
+                new_url = 'http://127.0.0.1:3007/article_images/' + filename
+                image_list.append(new_url)
+                content = content.replace(element, new_url)
+    article_info['content'] = content
+    article_info['image_list'] = image_list
     author_url = f"https://www.toutiao.com/c/user/token/{item['user_info']['user_id']}/"
     author_info = get_author_info(author_url)
     # 添加作者
@@ -301,17 +312,18 @@ def take_article(news_list, item, channel_item, ui_style):
     news_data = {
         'channel_id': channel_item['channel_id'],
         'article_id': item['group_id'],
-        'title': item['title'],
+        'title': article_info['title'],
         'url': article_url,
         'type': news_type,
         'ui_style': style,
         'image_list': image_list,
-        'publish_time': item['publish_time'],
+        'publish_time': article_info['publish_time'],
         'article_info': article_info,
         'user_id': author_info['user_id'],
-        'collect_count': 0,
-        'comment_count': 0,
-        'like_count': 0,
+        'view_count': random.randint(100, 15000),
+        'collect_count': random.randint(100, 15000),
+        'comment_count': random.randint(100, 15000),
+        'like_count': random.randint(100, 15000),
         'comment': []
     }
 
@@ -323,17 +335,17 @@ def take_article(news_list, item, channel_item, ui_style):
 def take_video(video_list, item, channel_item, ui_style):
     video_id = item['group_id']
     video_url = f"https://www.toutiao.com/video/{video_id}/"
-    news_type = 'video'
-    style = ui_style.split('|', 1)[1]
-    image_src = ''
-    save_path = 'D:\\work\\TTnews\\Vue3-TT-news-api\\public\\video_images'
-    filename = download_image(item['video_detail_info']['detail_video_large_image']['url'], save_path)
-    if filename is not None:
-        image_src = 'http://127.0.0.1:3007/video_images/' + filename
     video_info = get_video_info(video_url)
     if not video_info:
         print('The video is too long')
         return
+    news_type = 'video'
+    style = ui_style.split('|', 1)[1]
+    image_src = ''
+    save_path = 'D:\\work\\TTnews\\Vue3-TT-news-api\\public\\video_images'
+    filename = download_image(video_info['image_url'], save_path)
+    if filename is not None:
+        image_src = 'http://127.0.0.1:3007/video_images/' + filename
     author_url = f"https://www.toutiao.com/c/user/token/{item['user_info']['user_id']}/"
     author_info = get_author_info(author_url)
     # 添加作者
@@ -378,17 +390,18 @@ def take_video(video_list, item, channel_item, ui_style):
     video_data = {
         'channel_id': channel_item['channel_id'],
         'video_id': video_id,
-        'title': item['title'],
+        'title': video_info['title'],
         'url': video_url,
         'type': news_type,
         'ui_style': style,
         'image_src': image_src,
-        'publish_time': item['publish_time'],
+        'publish_time': video_info['publish_time'],
         'video_info': video_info,
         'user_id': author_info['user_id'],
-        'collect_count': 0,
-        'comment_count': 0,
-        'like_count': 0,
+        'play_count': random.randint(100, 15000),
+        'collect_count': random.randint(100, 15000),
+        'comment_count': random.randint(100, 15000),
+        'like_count': random.randint(100, 15000),
         'comment': []
     }
 
@@ -407,7 +420,7 @@ def get_news(channel_item):
     article_list = []
     video_list = []
     # 一次获取14~16条数据
-    for i in range(2):
+    for i in range(1):
         response = requests.get(url, headers=HEADERS)
         data = response.json()
         data_list = data["data"]
@@ -491,7 +504,7 @@ get_news(CHANNEL['history'])
 get_news(CHANNEL['food'])
 # 获取游戏新闻
 get_news(CHANNEL['games'])
-# # 获取旅游新闻
+# 获取旅游新闻
 get_news(CHANNEL['travel'])
 # 获取养生新闻
 get_news(CHANNEL['health'])
@@ -501,4 +514,4 @@ get_news(CHANNEL['fashion'])
 get_news(CHANNEL['parenting'])
 
 # 获取视频
-# get_news(CHANNEL['video'])
+get_news(CHANNEL['video'])
