@@ -60,6 +60,8 @@ def take_hot_event(item):
     print('----得到热点信息url:', url)
     if url.startswith("https://www.toutiao.com/article/"):
         news_type = 'article'
+        article_id = re.findall(r'\d+', url)[0]
+        print(article_id)
         article_info = get_article_info(url)
         author_url = get_author_url(url, news_type)
         author_info = get_author_info(author_url)
@@ -75,11 +77,16 @@ def take_hot_event(item):
             'ImageUrl': item['Image']['url'],
             'LabelDesc': item.get('LabelDesc', ''),
             'Type': news_type,
-            'ArticleInfo': article_info,
-            'AuthorInfo': author_info
+            'ArticleId': article_id,
+            'AuthorInfo': {
+                'user_id': author_info['user_id'],
+                'source_id': author_info['source_id'],
+            }
         }
     elif url.startswith("https://www.toutiao.com/video/"):
         news_type = 'video'
+        video_id = re.findall(r'\d+', url)[0]
+        print(video_id)
         video_info = get_video_info(url)
         if not video_info:
             return
@@ -97,8 +104,11 @@ def take_hot_event(item):
             'ImageUrl': item['Image']['url'],
             'LabelDesc': item.get('LabelDesc', ''),
             'Type': news_type,
-            'VideoInfo': video_info,
-            'AuthorInfo': author_info
+            'VideoId': video_id,
+            'AuthorInfo': {
+                'user_id': author_info['user_id'],
+                'source_id': author_info['source_id'],
+            }
         }
     else:
         return None
@@ -129,7 +139,7 @@ def get_hot_event():
                 take_article(
                     article_list,
                     {
-                        'group_id': re.findall(r'\d+', hot_event_data['Url'])[0],
+                        'group_id': hot_event_data['ArticleId'],
                         'user_info': {
                             'user_id': hot_event_data['AuthorInfo']['source_id']
                         }
@@ -143,7 +153,7 @@ def get_hot_event():
                 take_video(
                     video_list,
                     {
-                        'group_id': hot_event_data['VideoInfo']['video_id'],
+                        'group_id': hot_event_data['VideoId'],
                         'user_info': {
                             'user_id': hot_event_data['AuthorInfo']['source_id']
                         }

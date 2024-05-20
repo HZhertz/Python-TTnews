@@ -2,7 +2,6 @@ const jsdom = require('jsdom')
 const { JSDOM } = jsdom
 const dom = new JSDOM(`<!DOCTYPE html><p>Hello world</p>`)
 
-// node 环境下为 global，浏览器环境下为 this
 window = global
 
 var document = dom.window.document
@@ -14,7 +13,6 @@ var params = {
   },
   navigator: {
     userAgent:
-      // 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
   }
 }

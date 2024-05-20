@@ -6,10 +6,12 @@ db = client['TT_news']
 
 # ！！！清空数据库
 db['articles'].delete_many({})
-# db['hot_list'].delete_many({})
+db['hot_list'].delete_many({})
 db['users'].delete_many({})
 db['videos'].delete_many({})
 
 # db['administrators'].delete_many({})
+db['comments'].delete_many({})
+db['messages'].delete_many({})
 
 
