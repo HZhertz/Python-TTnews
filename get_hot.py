@@ -148,7 +148,7 @@ def get_hot_event():
                         'name': 'hot',
                         'channel_id': '3189398996',
                         'signature': 'hot_sig'
-                    }, 'avatar_hide|image_none')
+                    }, None)
             if hot_event_data['Type'] == 'video':
                 take_video(
                     video_list,

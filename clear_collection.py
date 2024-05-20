@@ -4,7 +4,7 @@ from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017/')
 db = client['TT_news']
 
-# ！！！清空数据库
+# ！！！清空数据库，运行此文件清空数据库
 db['articles'].delete_many({})
 db['hot_list'].delete_many({})
 db['users'].delete_many({})

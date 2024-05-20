@@ -23,12 +23,13 @@ hot_list_collection = db['hot_list']
 
 # 设置请求头信息
 HEADERS = {
-    "Cookie": "tt_webid=7312092887481959973",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    "Cookie": 'tt_webid=7371011174069339682',
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+
 }
 HEADERS_ = {
-    "Cookie": "ttwid=1%7Ctl1VFtYWJj3stLmKsWVg-ZfD7GpsUkBe18GanjhfZKY%7C1702479662%7C58d34dfbb056ede9cc6f0e57640c23c4a61f7f0ce0b15ba2da3c28423967a8c7",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    "Cookie": "ttwid=1%7CVlTXsez7Wqm6gwsoCgv0sNYytHBxfbI9jx04k1SL1K8%7C1716185670%7Ca230be9a075fc3821931d2e075a6c05b96c0fedd549d7eca4913ba5b97345385",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 }
 
 # 频道信息
@@ -36,82 +37,98 @@ CHANNEL = {
     'finance': {
         'name': 'finance',
         'channel_id': '3189399007',
-        'signature': 'finance_sig'
+        'signature': 'finance_sig',
+        'a_bogus': 'finance-a_bogus'
     },
     'technology': {
         'name': 'technology',
         'channel_id': '3189398999',
-        'signature': 'technology_sig'
+        'signature': 'technology_sig',
+        'a_bogus': 'technology-a_bogus'
     },
     'hot': {
         'name': 'hot',
         'channel_id': '3189398996',
-        'signature': 'hot_sig'
+        'signature': 'hot_sig',
+        'a_bogus': 'hot-a_bogus'
     },
     'international': {
         'name': 'international',
         'channel_id': '3189398968',
-        'signature': 'international_sig'
+        'signature': 'international_sig',
+        'a_bogus': 'international-a_bogus'
     },
     'military': {
         'name': 'military',
         'channel_id': '3189398960',
-        'signature': 'military_sig'
+        'signature': 'military_sig',
+        'a_bogus': 'military-a_bogus'
     },
     'sports': {
         'name': 'sports',
         'channel_id': '3189398957',
-        'signature': 'sports_sig'
+        'signature': 'sports_sig',
+        'a_bogus': 'sports-a_bogus'
     },
     'entertainment': {
         'name': 'entertainment',
         'channel_id': '3189398972',
-        'signature': 'entertainment_sig'
+        'signature': 'entertainment_sig',
+        'a_bogus': 'entertainment-a_bogus'
     },
     'digital': {
         'name': 'digital',
         'channel_id': '3189398981',
-        'signature': 'digital_sig'
+        'signature': 'digital_sig',
+        'a_bogus': 'digital-a_bogus'
     },
     'history': {
         'name': 'history',
         'channel_id': '3189398965',
-        'signature': 'history_sig'
+        'signature': 'history_sig',
+        'a_bogus': 'history-a_bogus'
     },
     'food': {
         'name': 'food',
         'channel_id': '3189399002',
-        'signature': 'food_sig'
+        'signature': 'food_sig',
+        'a_bogus': 'food-a_bogus'
     },
     'games': {
         'name': 'games',
         'channel_id': '3189398995',
-        'signature': 'games_sig'
+        'signature': 'games_sig',
+        'a_bogus': 'games-a_bogus'
     },
     'travel': {
         'name': 'travel',
         'channel_id': '3189398983',
-        'signature': 'travel_sig'
+        'signature': 'travel_sig',
+        'a_bogus': 'travel-a_bogus'
     },
     'health': {
         'name': 'health',
         'channel_id': '3189398959',
-        'signature': 'health_sig'
+        'signature': 'health_sig',
+        'a_bogus': 'health-a_bogus'
     },
     'fashion': {
         'name': 'fashion',
         'channel_id': '3189398984',
-        'signature': 'fashion_sig'
+        'signature': 'fashion_sig',
+        'a_bogus': 'fashion-a_bogus'
     },
     'parenting': {
         'name': 'parenting',
         'channel_id': '3189399004',
-        'signature': 'parenting_sig'
+        'signature': 'parenting_sig',
+        'a_bogus': 'parenting-a_bogus'
     },
     'video': {
         'name': 'video',
         'channel_id': '3431225546',
-        'signature': 'video_sig'
+        'signature': 'video_sig',
+        'a_bogus': 'video-a_bogus'
     },
 }
 
@@ -123,6 +140,17 @@ def get_signature():
     signature_str = re.sub(r'(\w+)(?=:)', r"'\1'", signature)
     signature_dict = ast.literal_eval(signature_str)
     return signature_dict
+
+
+# 运行js脚本获得a_bogus参数
+def get_a_bogus():
+    output = subprocess.check_output(['node', 'get_a_bogus.js'])
+    print(output)
+    a_boguses = output.decode('utf-8').strip()
+    print(a_boguses)
+    a_boguses_str = re.sub(r'(\w+)(?=:)', r"'\1'", a_boguses)
+    a_boguses_dict = ast.literal_eval(a_boguses_str)
+    return a_boguses_dict
 
 
 def get_image_list(html_content):
@@ -310,7 +338,7 @@ def take_article(news_list, item, channel_item, ui_style):
 
     article_id = item['group_id']
     article_url = f"https://www.toutiao.com/article/{article_id}/"
-    style = ui_style.split('|')[1]
+
     article_info = get_article_info(article_url)
     if not article_info:
         print('no seo_info or redirection')
@@ -327,6 +355,17 @@ def take_article(news_list, item, channel_item, ui_style):
                 content = content.replace(element, new_url)
     article_info['content'] = content
     article_info['image_list'] = image_list
+
+    style = ''
+    if ui_style:
+        style = ui_style.split('|')[1]
+    else:
+        if len(image_list) >= 3:
+            style = 'image_list'
+        elif len(image_list) > 0:
+            style = 'image_right'
+        else:
+            style = 'image_none'
 
     news_data = {
         'channel_id': channel_item['channel_id'],
@@ -437,16 +476,25 @@ def take_video(video_list, item, channel_item, ui_style):
 
 # 获取新闻信息
 def get_news(channel_item):
-    signature_dict = get_signature()
-    signature = signature_dict[channel_item['signature']]
-    url = f"https://www.toutiao.com/api/pc/list/feed?channel_id={channel_item['channel_id']}&min_behot_time=0&offset=0&category=pc_profile_channel&client_extra_params=%7B" \
-          f"%22short_video_item%22:%22filter%22%7D&aid=24&app_name=toutiao_web&_signature={signature}"
+    # signature_dict = get_signature()
+    # signature = signature_dict[channel_item['signature']]
+
+    a_bogus_dict = get_a_bogus()
+    a_bogus = a_bogus_dict[channel_item['a_bogus']]
+    print(a_bogus)
+
+    # ms_token = 'dO4H_z33ACz0jVjSN8DffZDcFXs2VNYzV31Hxjt4MaOXiykfDomnkQpXXArnHDxJOfG09fWgDOMXW2-NIkk5PvRR0IqXOSNWBJtIOIEIhU39WyVcD-G5W7Fyz6KywUoMAw%3D%3D'
+    url = f"https://www.toutiao.com/api/pc/list/feed?channel_id={channel_item['channel_id']}&min_behot_time=0&offset=0&category=pc_profile_channel&client_extra_params=%7B%22short_video_item%22%3A" \
+          f"%22filter%22%7D&aid=24&app_name=toutiao_web&a_bogus={a_bogus} "
     print(f"@@@{channel_item['name']}新闻请求URL:{url}")
     article_list = []
     video_list = []
     # 一次获取14~16条数据
     for i in range(1):
+        print(url, HEADERS)
         response = requests.get(url, headers=HEADERS)
+        print(response)
+        print(response.text)
         data = response.json()
         data_list = data["data"]
         if channel_item['name'] == 'hot':
@@ -508,7 +556,7 @@ def get_news(channel_item):
 
 
 # # 获取财经新闻
-get_news(CHANNEL['finance'])
+# get_news(CHANNEL['finance'])
 # # 获取科技新闻
 # get_news(CHANNEL['technology'])
 # # 获取热点新闻
@@ -539,4 +587,4 @@ get_news(CHANNEL['finance'])
 # get_news(CHANNEL['parenting'])
 #
 # # 获取视频
-get_news(CHANNEL['video'])
+# get_news(CHANNEL['video'])
